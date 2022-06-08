@@ -4,11 +4,12 @@
  * @Author: chunchun.liu
  * @Date: 2021-11-29 17:08:17
  * @LastEditors: your name
- * @LastEditTime: 2021-11-29 19:13:56
+ * @LastEditTime: 2022-06-08 20:04:44
  */
 // const webpack = require('webpack');
 const path = require("path");
 module.exports = {
+  runtimeCompiler:true,//运行时加上编译器,动态组件需要 参考地址：http://nanshanqiao.com/zz_article/51.html
   lintOnSave:false,
   css:{
     loaderOptions:{
@@ -27,7 +28,6 @@ module.exports = {
         .use('vue')
             .loader('vue-loader')
             .tap(options => {
-                console.log("vuevueeeeee")
                 // 修改它的选项...
                 if(options&&options.compilerOptions){
                     options.compilerOptions.preserveWhitespace = false

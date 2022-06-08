@@ -4,15 +4,35 @@
     :class="[blockClass, { 'hover': hovering }]"
     @mouseenter="hovering = true"
     @mouseleave="hovering = false">
+    <div class="testCode">
+        <!-- {{testCode}} -->
+        <test-code-component :code="code"></test-code-component>
+      </div>
     <div class="source">
-      <slot name="source"></slot>
+      <!-- <slot name="source"></slot> -->
     </div>
     <div class="meta" ref="meta">
       <div class="description" v-if="$slots.default">
         <slot></slot>
+        <el-button @click="handleRefresh">刷新代码</el-button>
       </div>
+
+      
+
+
+      <!-- 展示代码源代码code的部分 -->
       <div class="highlight">
-        <slot name="highlight"></slot>
+
+        <!-- lcc新增，处理可以编辑组件代码 -->
+        <!-- <slot name="highlight"></slot> -->
+        <codemirror
+          ref="cm"
+          :code="code"
+          :options="cmOptions"
+          @input="inputChange"
+        >
+          
+        </codemirror>
       </div>
     </div>
     <div
@@ -181,6 +201,30 @@
 </style>
 
 <script type="text/babel">
+// 引入语言模式 可以从 codemirror/mode/ 下引入多个
+import 'codemirror/mode/vue/vue.js';
+// import 'codemirror/mode/sql/sql.js';
+
+  // 代码提示功能 具体语言可以从 codemirror/addon/hint/ 下引入多个
+  import 'codemirror/addon/hint/show-hint.css';
+  import 'codemirror/addon/hint/show-hint';
+  import 'codemirror/addon/hint/html-hint';
+  import 'codemirror/addon/hint/javascript-hint';
+  // import 'codemirror/addon/hint/sql-hint';
+
+  // 自动括号匹配功能
+  import 'codemirror/addon/edit/matchbrackets'
+
+  // 代码段折叠功能
+  import 'codemirror/addon/fold/foldcode'
+  import 'codemirror/addon/fold/foldgutter'
+  import 'codemirror/addon/fold/foldgutter.css'
+  import 'codemirror/addon/fold/brace-fold'
+  import 'codemirror/addon/fold/comment-fold'
+  import 'codemirror/addon/fold/xml-fold.js';
+  import 'codemirror/addon/fold/indent-fold.js';
+  import 'codemirror/addon/fold/markdown-fold.js';
+  import 'codemirror/addon/fold/comment-fold.js';
   // import compoLang from '../i18n/component.json';
   import Element from 'element-ui';
   import { stripScript, stripStyle, stripTemplate } from '../util';
@@ -189,6 +233,34 @@
   export default {
     data() {
       return {
+        testCode:"",
+        code:"",
+        cmOptions: {
+          // 语言及语法模式
+          mode: 'text/x-vue',
+          // 主题
+          theme: 'idea',
+          // 显示函数
+          line: true,
+          lineNumbers: true,
+          // 软换行
+          lineWrapping: true,
+          // tab宽度
+          tabSize: 4,
+          // 高亮行功能
+          styleActiveLine: true,
+          // 自动括号匹配功能
+          matchBrackets: true,
+          // 代码提示功能
+          hintOptions: {
+            // 避免由于提示列表只有一个提示信息时，自动填充
+            completeSingle: false,
+            // 不同的语言支持从配置中读取自定义配置 sql语言允许配置表和字段信息，用于代码提示
+            // tables: {
+              // "table1": ["c1", "c2"],
+            // },
+          },
+        },
         codepen: {
           script: '',
           html: '',
@@ -197,11 +269,22 @@
         hovering: false,
         isExpanded: false,
         fixedControl: false,
-        scrollParent: null
+        scrollParent: null,
+        content:"",
       };
     },
 
     methods: {
+      handleRefresh(){
+        this.code = this.content;
+      },
+      inputChange(content) {
+        this.$nextTick(() => {
+          console.log("code:" + this.code);
+          console.log("content:" + content);
+          this.content = content;
+        });
+      },
       goCodepen() {
         // since 2.6.2 use code rather than jsfiddle https://blog.codepen.io/documentation/api/prefill/
         const { script, html, style } = this.codepen;
@@ -247,6 +330,16 @@
 
       removeScrollHandler() {
         this.scrollParent && this.scrollParent.removeEventListener('scroll', this.scrollHandler);
+      },
+
+      handleTest(){
+        const _$createElement = this.$createElement;
+        this.testCode = _$createElement("div",{
+                class:{customCalendar:true}
+            },[
+                _$createElement(this.code,{})
+            ]
+        );
       }
     },
 
@@ -312,21 +405,33 @@
       if (highlight && highlight[0]) {
         let code = '';
         let cur = highlight[0];
+        
         if (cur.tag === 'pre' && (cur.children && cur.children[0])) {
           cur = cur.children[0];
           if (cur.tag === 'code') {
             code = cur.children[0].text;
           }
         }
+        
         if (code) {
           this.codepen.html = stripTemplate(code);
+          this.code = this.codepen.html;
+          // this.handleTest();
           this.codepen.script = stripScript(code);
           this.codepen.style = stripStyle(code);
         }
+
+        
+
+        console.log(highlight,"======")
       }
     },
 
     mounted() {
+      // 代码提示功能 当用户有输入时，显示提示信息
+      this.$refs.cm.codemirror.on('inputRead', cm => {
+        cm.showHint();
+      });
       this.$nextTick(() => {
         let highlight = this.$el.getElementsByClassName('highlight')[0];
         if (this.$el.getElementsByClassName('description').length === 0) {

@@ -4,13 +4,13 @@
  * @Author: chunchun.liu
  * @Date: 2021-06-29 13:45:48
  * @LastEditors: your name
- * @LastEditTime: 2021-11-29 19:08:28
+ * @LastEditTime: 2022-06-08 19:30:55
  */
 const {
   stripScript,
   stripTemplate,
   genInlineComponentText
-} = require('./util');
+} = require('./util'); // 提取script内容和纯内容部分，以及拼接好模板的方法
 const md = require('./config'); // 暴露出已经处理好markdownit插件的md
 
 module.exports = function(source) {
@@ -65,7 +65,6 @@ module.exports = function(source) {
   }
 
   output.push(content.slice(start));
-  console.log(output.join(""),"outputoutput")
   return `
     <template>
       <section class="content element-doc">
